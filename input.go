@@ -72,7 +72,7 @@ func (in Input) listenTCP(dest chan gelf.Chunk) (err error) {
 
 func (in Input) listenUDP(dest chan gelf.Chunk) (err error) {
 	defer close(dest)
-	l, err := net.ListenPacket("udp", strings.TrimPrefix(in.Address, "tcp://"))
+	l, err := net.ListenPacket("udp", strings.TrimPrefix(in.Address, "udp://"))
 	if err != nil {
 		return
 	}

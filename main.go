@@ -49,6 +49,7 @@ func main() {
 
 	var wg sync.WaitGroup
 	for i, in := range ins {
+		log.Printf("Input %d listening on %s", i, in.Address)
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
