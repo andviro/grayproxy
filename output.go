@@ -53,7 +53,7 @@ func (out Output) sendTCP(data []byte) (err error) {
 }
 
 // Send sends message to required address
-func (out *Output) Send(data []byte) error {
+func (out Output) Send(data []byte) error {
 	switch {
 	case strings.HasPrefix(out.Address, "http"):
 		return out.sendHTTP(data)
