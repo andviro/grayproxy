@@ -58,4 +58,6 @@ func main() {
 			}
 		}(i)
 	}
+	wg.Wait()
+	log.Print("Bye")
 }
