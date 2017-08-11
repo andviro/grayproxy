@@ -4,7 +4,7 @@ ENV GOPATH=/go \
 RUN mkdir -p /go/src/github.com/andviro/grayproxy
 ADD . /go/src/github.com/andviro/grayproxy
 RUN apk update && \
-    apk add git go libc-dev && \
+    apk add ca-certificates git go libc-dev && \
     go get -v github.com/andviro/grayproxy/...  && \
     apk del git go libc-dev && \
     rm -rf /go/src && \
