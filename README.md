@@ -1,6 +1,9 @@
 # grayproxy
 
-A simple forwarding proxy for Graylog GELF messages. 
+A simple forwarding proxy for Graylog GELF messages. Can be used as
+load-balancer in front of multiple Graylog server nodes. Also helps if the
+Graylog server or logging application is behind a firewall and direct logging
+to UDP is not viable.
 
 ## Usage
 
