@@ -2,19 +2,24 @@ package gelf
 
 import (
 	"bytes"
-	"errors"
 	"time"
 )
 
+type err string
+
+func (e err) Error() string {
+	return string(e)
+}
+
 // ErrTimeout is returned by Assembler if the current chunk came too late.
-var ErrTimeout = errors.New("Assembly time exceeded")
+const ErrTimeout = err("Assembly time exceeded")
 
 // ErrInvalidCount is returned by Assembler if the chunk sequence number and count do not match with the initial values
-var ErrInvalidCount = errors.New("Chunk out of sequence")
+const ErrInvalidCount = err("Chunk out of sequence")
 
 // ErrMessageTooLong is returned by Assembler if the message size limit
 // exceeded.
-var ErrMessageTooLong = errors.New("Message too long")
+const ErrMessageTooLong = err("Message too long")
 
 // Assembler provides GELF message de-chunking
 type Assembler struct {
