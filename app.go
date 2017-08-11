@@ -107,11 +107,13 @@ func (app *app) run() (err error) {
 	go func() {
 		for msg := range msgs {
 			var sent bool
-			for _, out := range app.outs {
-				if err := out.send(msg); err == nil {
-					sent = true
-					break
+			for i, out := range app.outs {
+				if err := out.send(msg); err != nil {
+					log.Printf("ERROR: sending message to output %d: %v", i, err)
+					continue
 				}
+				sent = true
+				break
 			}
 			if !sent {
 				// TODO: message buffering on disk
