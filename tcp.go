@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"net"
 	"strings"
 	"time"
@@ -29,18 +28,6 @@ func tcpSplit(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		return len(data), data, nil
 	}
 	return
-}
-
-func (in *tcpListener) String() string {
-	return fmt.Sprint(*in)
-}
-
-func (in *tcpListener) Set(val string) error {
-	n, _ := fmt.Sscan(strings.TrimPrefix(val, "tcp://"), &in.Address)
-	if n == 0 {
-		return errors.New("empty input description")
-	}
-	return nil
 }
 
 func (in *tcpListener) listen(dest chan gelf.Chunk) (err error) {
@@ -86,19 +73,4 @@ func (out *tcpSender) send(data []byte) (err error) {
 		return errors.New("short TCP write")
 	}
 	return
-}
-
-func (out *tcpSender) String() string {
-	return fmt.Sprint(*out)
-}
-
-func (out *tcpSender) Set(val string) error {
-	n, _ := fmt.Sscan(val, &out.Address, &out.SendTimeout)
-	if n == 0 {
-		return errors.New("empty input description")
-	}
-	if out.SendTimeout == 0 {
-		out.SendTimeout = 500
-	}
-	return nil
 }
