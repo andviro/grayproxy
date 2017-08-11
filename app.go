@@ -74,9 +74,11 @@ func (app *app) configure() (err error) {
 			l.StopTimeout = app.stopTimeout
 			app.ins[i] = l
 		default:
-			app.ins[i] = new(tcpListener)
+			app.ins[i] = &tcpListener{
+				Address: strings.TrimPrefix(v, "tcp://"),
+			}
 		}
-		log.Printf("Added input %d: %s", i, v)
+		log.Printf("Added input %d at %s", i, v)
 	}
 
 	if len(app.outputURLs) == 0 {
@@ -100,7 +102,7 @@ func (app *app) run() (err error) {
 		return errors.Wrap(err, "configuring app")
 	}
 
-	msgs := make(chan gelf.Chunk, 100)
+	msgs := make(chan gelf.Chunk, len(app.ins))
 	defer close(msgs)
 	go func() {
 		for msg := range msgs {
@@ -119,11 +121,11 @@ func (app *app) run() (err error) {
 	}()
 
 	var wg sync.WaitGroup
-	for i, in := range app.ins {
+	for i := range app.ins {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			err := in.listen(msgs)
+			err := app.ins[i].listen(msgs)
 			if err != nil {
 				log.Printf("Input %d exited with error: %+v", i, err)
 			}

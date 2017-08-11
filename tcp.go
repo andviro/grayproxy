@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/armon/go-proxyproto"
@@ -31,8 +30,7 @@ func tcpSplit(data []byte, atEOF bool) (advance int, token []byte, err error) {
 }
 
 func (in *tcpListener) listen(dest chan gelf.Chunk) (err error) {
-	defer close(dest)
-	l, err := net.Listen("tcp", strings.TrimPrefix(in.Address, "tcp://"))
+	l, err := net.Listen("tcp", in.Address)
 	if err != nil {
 		return errors.Wrap(err, "setting up TCP listener")
 	}
