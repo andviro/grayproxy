@@ -40,6 +40,10 @@ stdout. To listen on multiple TCP, HTTP or UDP inputs, `-in` flag can be used.
     	server stop timeout (ms) (default 2000)
 ```
 
+## Credits
+
+The idea of a pipelined GELF dechunker borrowed from [timtkachenko/gelf-go](https://github.com/timtkachenko/gelf-go).
+
 ## License
 
 This code is released under 
