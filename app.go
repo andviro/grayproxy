@@ -43,7 +43,7 @@ type app struct {
 
 func (app *app) configure() (err error) {
 	fs := flag.NewFlagSet("grayproxy", flag.ExitOnError)
-	fs.Var(&app.inputURLs, "in", "input address in form schema://address:port (may be specified multiple times)")
+	fs.Var(&app.inputURLs, "in", "input address in form schema://address:port (may be specified multiple times). Default: udp://:12201")
 	fs.Var(&app.outputURLs, "out", "output address in form schema://address:port (may be specified multiple times)")
 	fs.IntVar(&app.maxChunkSize, "maxChunkSize", 8192, "maximum UDP chunk size")
 	fs.IntVar(&app.maxMessageSize, "maxMessageSize", 128*1024, "maximum UDP de-chunked message size")
@@ -55,12 +55,8 @@ func (app *app) configure() (err error) {
 		return errors.Wrap(err, "parsing command-line")
 	}
 	if len(app.inputURLs) == 0 {
-		return errors.New("empty input address list")
+		app.inputURLs = urlList{"udp://:12201"}
 	}
-	if len(app.outputURLs) == 0 {
-		return errors.New("empty output address list")
-	}
-
 	app.ins = make([]listener, len(app.inputURLs))
 	for i, v := range app.inputURLs {
 		switch {
@@ -80,8 +76,12 @@ func (app *app) configure() (err error) {
 		default:
 			app.ins[i] = new(tcpListener)
 		}
+		log.Printf("Added input %d: %s", i, v)
 	}
 
+	if len(app.outputURLs) == 0 {
+		log.Print("WARNING: no outputs configured")
+	}
 	app.outs = make([]sender, len(app.outputURLs))
 	for i, v := range app.outputURLs {
 		switch {
@@ -90,6 +90,7 @@ func (app *app) configure() (err error) {
 		default:
 			app.outs[i] = &tcpSender{Address: strings.TrimPrefix("tcp://", v), SendTimeout: app.sendTimeout}
 		}
+		log.Printf("Added output %d: %s", i, v)
 	}
 	return
 }
