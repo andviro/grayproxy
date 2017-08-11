@@ -20,7 +20,7 @@ var (
 
 // IsGELF returns true if the byte chunk starts with the GELF magic sequence
 func (c Chunk) IsGELF() bool {
-	return bytes.Compare(c[:2], gelfMagic) == 0
+	return len(c) > 11 && bytes.Compare(c[:2], gelfMagic) == 0
 }
 
 // ID returns chunk ID

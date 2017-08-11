@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+const periodicCleanup = 5 * time.Second
+
 // Assemble consumes byte chunks from the input channel, usually passed from
 // UDP server. It feeds de-chunked messages to the result channel.
 func Assemble(chunks <-chan Chunk, maxMessageSize int, assembleTimeout time.Duration) <-chan Chunk {
@@ -12,27 +14,33 @@ func Assemble(chunks <-chan Chunk, maxMessageSize int, assembleTimeout time.Dura
 	go func() {
 		defer close(encodedMsgs)
 		assemblers := make(map[string]*Assembler)
-		for chunk := range chunks {
-			if chunk.IsGELF() {
-				cid := chunk.ID()
-				a, ok := assemblers[cid]
+		for {
+			select {
+			case chunk, ok := <-chunks:
 				if !ok {
-					a = NewAssembler(maxMessageSize, assembleTimeout)
-					assemblers[cid] = a
+					return
 				}
-				ok, err := a.Update(chunk)
-				if err != nil {
-					if err != ErrInvalidCount {
-						delete(assemblers, cid)
+				if chunk.IsGELF() {
+					cid := chunk.ID()
+					a, ok := assemblers[cid]
+					if !ok {
+						a = NewAssembler(maxMessageSize, assembleTimeout)
+						assemblers[cid] = a
 					}
-					continue
+					if !a.Update(chunk) {
+						continue
+					}
+					chunk = a.Bytes()
+					delete(assemblers, cid)
 				}
-				if !ok {
-					continue
+				encodedMsgs <- chunk
+			case <-time.After(periodicCleanup):
+				for k, v := range assemblers {
+					if v.Expired() {
+						delete(assemblers, k)
+					}
 				}
-				chunk = a.Bytes()
 			}
-			encodedMsgs <- chunk
 		}
 	}()
 	return encodedMsgs

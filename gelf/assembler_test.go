@@ -17,12 +17,12 @@ var AssemblerTestCases = [][]byte{
 func TestAssembling(t *testing.T) {
 	a := NewAssembler(1024, time.Second*1)
 	for i := 0; i < 2; i++ {
-		if ok, err := a.Update(AssemblerTestCases[i]); ok || err != nil {
-			t.Fatalf("Unexpected assembly result: %v", err)
+		if ok := a.Update(AssemblerTestCases[i]); ok {
+			t.Fatal("Should not assemble")
 		}
 	}
-	if ok, err := a.Update(AssemblerTestCases[2]); !ok || err != nil {
-		t.Fatalf("Assembly should complete")
+	if ok := a.Update(AssemblerTestCases[2]); !ok {
+		t.Fatal("Assembly should complete")
 	}
 	if c := a.Bytes(); bytes.Compare(c, []byte{1, 2, 3}) != 0 {
 		t.Fatalf("Invalid assembly: %v", c)
@@ -35,29 +35,26 @@ func TestAssembleTimeout(t *testing.T) {
 		return
 	}
 	a := NewAssembler(1024, time.Second*1)
-	ok, err := a.Update(AssemblerTestCases[0])
-	if ok || err != nil {
-		t.Fatalf("Unexpected result updating: %v %v", ok, err)
+	ok := a.Update(AssemblerTestCases[0])
+	if ok {
+		t.Fatal("Should not assemble")
 	}
 	time.Sleep(2 * time.Second)
-	_, err = a.Update(AssemblerTestCases[1])
-	if err == nil {
-		t.Fatalf("Assembly should fail")
+	if !a.Expired() {
+		t.Fatal("Assembler should expire")
 	}
 }
 
 func TestAssembleInvalid(t *testing.T) {
 	a := NewAssembler(1024, time.Second*1)
-	ok, err := a.Update(AssemblerTestCases[0])
-	if ok || err != nil {
-		t.Fatalf("Unexpected result updating: %v %v", ok, err)
+	ok := a.Update(AssemblerTestCases[0])
+	if ok {
+		t.Fatal("Should not assemble")
 	}
-	ok, err = a.Update(AssemblerTestCases[3])
-	if ok || err == nil {
-		t.Fatalf("Should be error here: %v", err)
+	if ok = a.Update(AssemblerTestCases[3]); ok {
+		t.Fatal("Should not assemble")
 	}
-	ok, err = a.Update(AssemblerTestCases[4])
-	if ok || err == nil {
-		t.Fatalf("Should be error here: %v", err)
+	if ok = a.Update(AssemblerTestCases[4]); ok {
+		t.Fatal("Should not assemble")
 	}
 }

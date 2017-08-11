@@ -5,22 +5,6 @@ import (
 	"time"
 )
 
-type err string
-
-func (e err) Error() string {
-	return string(e)
-}
-
-// ErrTimeout is returned by Assembler if the current chunk came too late.
-const ErrTimeout = err("Assembly time exceeded")
-
-// ErrInvalidCount is returned by Assembler if the chunk sequence number and count do not match with the initial values
-const ErrInvalidCount = err("Chunk out of sequence")
-
-// ErrMessageTooLong is returned by Assembler if the message size limit
-// exceeded.
-const ErrMessageTooLong = err("Message too long")
-
 // Assembler provides GELF message de-chunking
 type Assembler struct {
 	deadline                   time.Time
@@ -43,32 +27,30 @@ func (a *Assembler) Bytes() []byte {
 	return bytes.Join(a.fullMsg, nil)
 }
 
+// Expired returns true if first chunk is too old
+func (a *Assembler) Expired() bool {
+	return time.Now().After(a.deadline)
+}
+
 // Update feeds the byte chunk to Assembler, returns ok when the message is
 // complete.
-func (a *Assembler) Update(chunk Chunk) (ok bool, err error) {
-	if time.Now().After(a.deadline) {
-		err = ErrTimeout
-		return
-	}
+func (a *Assembler) Update(chunk Chunk) bool {
 	num, count := chunk.Sequence()
 	if a.fullMsg == nil {
 		a.fullMsg = make([][]byte, count)
 	}
 	if count != len(a.fullMsg) || num >= count {
-		err = ErrInvalidCount
-		return
+		return false
 	}
 	body := chunk.Body()
 
 	if a.fullMsg[num] == nil {
 		a.totalBytes += len(body)
 		if a.totalBytes > a.maxMessageSize {
-			err = ErrMessageTooLong
-			return
+			return false
 		}
 		a.fullMsg[num] = body
 		a.processed++
 	}
-	ok = a.processed == len(a.fullMsg)
-	return
+	return a.processed == len(a.fullMsg)
 }
