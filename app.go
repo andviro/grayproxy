@@ -90,7 +90,7 @@ func (app *app) configure() (err error) {
 		case strings.HasPrefix(v, "http://") || strings.HasPrefix(v, "https://"):
 			app.outs[i] = &httpSender{Address: v, SendTimeout: app.sendTimeout}
 		default:
-			app.outs[i] = &tcpSender{Address: strings.TrimPrefix("tcp://", v), SendTimeout: app.sendTimeout}
+			app.outs[i] = &tcpSender{Address: strings.TrimPrefix(v, "tcp://"), SendTimeout: app.sendTimeout}
 		}
 		log.Printf("Added output %d: %s", i, v)
 	}
