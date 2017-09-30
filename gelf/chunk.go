@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"compress/zlib"
 	"io"
+	"io/ioutil"
 )
 
 // Chunk represent GELF UDP chunk
@@ -20,7 +21,7 @@ var (
 
 // IsGELF returns true if the byte chunk starts with the GELF magic sequence
 func (c Chunk) IsGELF() bool {
-	return len(c) > 11 && bytes.Compare(c[:2], gelfMagic) == 0
+	return len(c) > 11 && bytes.Equal(c[:2], gelfMagic)
 }
 
 // ID returns chunk ID
@@ -38,17 +39,24 @@ func (c Chunk) Body() []byte {
 	return c[12:]
 }
 
-// Reader returns appropriate decoding reader for the chunk
-func (c Chunk) Reader() (res io.Reader, err error) {
+// Data returns appropriately decoded message bytes
+func (c Chunk) Data(decompressSizeLimit int) (res []byte, err error) {
+	var r io.Reader
 	m := c[:2]
-	res = bytes.NewReader(c)
 	switch {
-	case bytes.Compare(m, zlibMagic0) == 0 || bytes.Compare(m, zlibMagic1) == 0 || bytes.Compare(m, zlibMagic2) == 0:
-		return zlib.NewReader(res)
-	case bytes.Compare(c[:2], gzipMagic) == 0:
-		return gzip.NewReader(res)
+	case bytes.Equal(m, zlibMagic0) || bytes.Equal(m, zlibMagic1) || bytes.Equal(m, zlibMagic2):
+		if r, err = zlib.NewReader(bytes.NewReader(c)); err != nil {
+			return
+		}
+	case bytes.Equal(m, gzipMagic):
+		if r, err = gzip.NewReader(bytes.NewReader(c)); err != nil {
+			return
+		}
 	default:
-		return
+		return []byte(c), nil
 	}
-
+	if decompressSizeLimit > 0 {
+		r = io.LimitReader(r, int64(decompressSizeLimit))
+	}
+	return ioutil.ReadAll(r)
 }

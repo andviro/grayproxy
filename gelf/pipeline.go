@@ -1,7 +1,6 @@
 package gelf
 
 import (
-	"io"
 	"time"
 )
 
@@ -52,16 +51,11 @@ func Extract(encodedMsgs <-chan Chunk, decompressSizeLimit int) <-chan []byte {
 	go func() {
 		defer close(messages)
 		for msg := range encodedMsgs {
-			r, err := msg.Reader()
+			data, err := msg.Data(decompressSizeLimit)
 			if err != nil {
 				continue
 			}
-			buf := make([]byte, decompressSizeLimit)
-			n, err := r.Read(buf)
-			if err != nil && err != io.EOF {
-				continue
-			}
-			messages <- buf[:n]
+			messages <- data
 		}
 	}()
 	return messages
