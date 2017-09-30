@@ -24,7 +24,7 @@ func (ul *urlList) String() string {
 }
 
 type listener interface {
-	listen(dest chan gelf.Chunk) (err error)
+	listen(dest chan<- gelf.Chunk) (err error)
 }
 
 type sender interface {
@@ -80,7 +80,6 @@ func (app *app) configure() (err error) {
 		}
 		log.Printf("Added input %d at %s", i, v)
 	}
-
 	if len(app.outputURLs) == 0 {
 		log.Print("WARNING: no outputs configured")
 	}
@@ -97,13 +96,7 @@ func (app *app) configure() (err error) {
 	return
 }
 
-func (app *app) run() (err error) {
-	if err = app.configure(); err != nil {
-		return errors.Wrap(err, "configuring app")
-	}
-
-	msgs := make(chan gelf.Chunk, len(app.ins))
-	defer close(msgs)
+func (app *app) enqueue(msgs <-chan gelf.Chunk) {
 	go func() {
 		for msg := range msgs {
 			var sent bool
@@ -121,7 +114,14 @@ func (app *app) run() (err error) {
 			}
 		}
 	}()
+}
 
+func (app *app) run() (err error) {
+	if err = app.configure(); err != nil {
+		return errors.Wrap(err, "configuring app")
+	}
+	msgs := make(chan gelf.Chunk, len(app.ins))
+	defer close(msgs)
 	var wg sync.WaitGroup
 	for i := range app.ins {
 		wg.Add(1)
@@ -133,6 +133,7 @@ func (app *app) run() (err error) {
 			}
 		}(i)
 	}
+	go app.enqueue(msgs)
 	wg.Wait()
 	log.Print("Bye")
 	return

@@ -14,7 +14,7 @@ type udpListener struct {
 	MaxChunkSize, MaxMessageSize, DecompressSizeLimit, AssembleTimeout int
 }
 
-func (in *udpListener) listen(dest chan gelf.Chunk) (err error) {
+func (in *udpListener) listen(dest chan<- gelf.Chunk) (err error) {
 	chunks := make(chan gelf.Chunk)
 	defer close(chunks)
 

@@ -29,7 +29,7 @@ func tcpSplit(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	return
 }
 
-func (in *tcpListener) listen(dest chan gelf.Chunk) (err error) {
+func (in *tcpListener) listen(dest chan<- gelf.Chunk) (err error) {
 	l, err := net.Listen("tcp", in.Address)
 	if err != nil {
 		return errors.Wrap(err, "setting up TCP listener")

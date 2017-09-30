@@ -16,7 +16,7 @@ type httpListener struct {
 	web.Server
 }
 
-func (in *httpListener) listen(dest chan gelf.Chunk) (err error) {
+func (in *httpListener) listen(dest chan<- gelf.Chunk) (err error) {
 	err = in.Serve(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		data, err := ioutil.ReadAll(r.Body)
