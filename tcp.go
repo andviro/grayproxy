@@ -54,21 +54,31 @@ func (in *tcpListener) listen(dest chan gelf.Chunk) (err error) {
 type tcpSender struct {
 	Address     string
 	SendTimeout int
+	conn        net.Conn
+	err         error
 }
 
-func (out *tcpSender) send(data []byte) (err error) {
-	conn, err := net.DialTimeout("tcp", out.Address, time.Duration(out.SendTimeout)*time.Millisecond)
-	if err != nil {
+func (out *tcpSender) write(data []byte) {
+	if out.err != nil {
 		return
 	}
-	defer conn.Close()
-	conn.SetDeadline(time.Now().Add(time.Duration(out.SendTimeout) * time.Millisecond))
-	n, err := conn.Write(data)
-	if err != nil {
+	var n int
+	if n, out.err = out.conn.Write(data); out.err != nil {
+		out.err = errors.Wrap(out.err, "writing TCP")
 		return
 	}
 	if n != len(data) {
-		return errors.New("short TCP write")
+		out.err = errors.New("short TCP write")
 	}
-	return
+}
+
+func (out *tcpSender) send(data []byte) (err error) {
+	if out.conn, err = net.DialTimeout("tcp", out.Address, time.Duration(out.SendTimeout)*time.Millisecond); err != nil {
+		return errors.Wrap(err, "creating TCP connection")
+	}
+	defer out.conn.Close()
+	out.conn.SetDeadline(time.Now().Add(time.Duration(out.SendTimeout) * time.Millisecond))
+	out.write(data)
+	out.write([]byte{0})
+	return out.err
 }
