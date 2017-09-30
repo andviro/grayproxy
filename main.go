@@ -6,5 +6,5 @@ import (
 
 func main() {
 	app := new(app)
-	log.Fatalf("%v", app.run())
+	log.Fatalf("%+v", app.run())
 }
