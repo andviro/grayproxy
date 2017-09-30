@@ -46,7 +46,7 @@ func (a *Assembler) Update(chunk Chunk) bool {
 
 	if a.fullMsg[num] == nil {
 		a.totalBytes += len(body)
-		if a.totalBytes > a.maxMessageSize {
+		if a.maxMessageSize > 0 && a.totalBytes > a.maxMessageSize {
 			return false
 		}
 		a.fullMsg[num] = body
