@@ -22,22 +22,14 @@ stdout. To listen on multiple TCP, HTTP or UDP inputs, `-in` flag can be used.
 ## Command-line options
 
 ```
-  -assembleTimeout int
-    	maximum UDP chunk assemble time (ms) (default 1000)
-  -decompressSizeLimit int
-    	maximum decompressed message size (default 1048576)
+  -dataDir string
+    	buffer directory (defaults to no buffering)
   -in value
     	input address in form schema://address:port (may be specified multiple times). Default: udp://:12201
-  -maxChunkSize int
-    	maximum UDP chunk size (default 8192)
-  -maxMessageSize int
-    	maximum UDP de-chunked message size (default 131072)
   -out value
     	output address in form schema://address:port (may be specified multiple times)
   -sendTimeout int
     	maximum TCP or HTTP output timeout (ms) (default 1000)
-  -stopTimeout int
-    	server stop timeout (ms) (default 2000)
 ```
 
 ## Credits

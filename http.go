@@ -16,7 +16,7 @@ type httpListener struct {
 	web.Server
 }
 
-func (in *httpListener) listen(dest chan<- gelf.Chunk) (err error) {
+func (in *httpListener) Listen(dest chan<- gelf.Chunk) (err error) {
 	err = in.Serve(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		data, err := ioutil.ReadAll(r.Body)
@@ -33,7 +33,7 @@ type httpSender struct {
 	SendTimeout int
 }
 
-func (out *httpSender) send(data []byte) (err error) {
+func (out *httpSender) Send(data []byte) (err error) {
 	req, err := http.NewRequest("POST", out.Address, bytes.NewReader(data))
 	if err != nil {
 		return
