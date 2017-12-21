@@ -48,6 +48,8 @@ func (app *app) newListener(addr string) listener {
 	return &tcpListener{Address: strings.TrimPrefix(addr, "tcp://")}
 }
 
+func dummyLogf(lvl diskqueue.LogLevel, f string, args ...interface{}) {}
+
 func (app *app) configure() (err error) {
 	fs := flag.NewFlagSet("grayproxy", flag.ExitOnError)
 	fs.Var(&app.inputURLs, "in", "input address in form schema://address:port (may be specified multiple times). Default: udp://:12201")
@@ -92,6 +94,6 @@ func (app *app) configure() (err error) {
 	if !stat.IsDir() {
 		return errors.Errorf("%q is not a directory", app.dataDir)
 	}
-	app.q = diskqueue.New("messages", app.dataDir, diskFileSize, 0, decompressSizeLimit, 2500, 2000, nil)
+	app.q = diskqueue.New("messages", app.dataDir, diskFileSize, 0, decompressSizeLimit, 2500, 2000, dummyLogf)
 	return
 }
