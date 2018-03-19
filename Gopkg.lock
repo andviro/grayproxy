@@ -5,7 +5,7 @@
   branch = "master"
   name = "github.com/armon/go-proxyproto"
   packages = ["."]
-  revision = "48572f11356f1843b694f21a290d4f1006bc5e47"
+  revision = "5b7edb60ff5f69b60d1950397f7bde6171f1807d"
 
 [[projects]]
   branch = "master"
@@ -17,7 +17,7 @@
   branch = "master"
   name = "github.com/nsqio/go-diskqueue"
   packages = ["."]
-  revision = "0681a1afee1245efa503b7543989fc26d8f268bc"
+  revision = "74cfbc9de8399a7fa86d676b908b002120826fc0"
 
 [[projects]]
   name = "github.com/pkg/errors"
