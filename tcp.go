@@ -62,6 +62,12 @@ func (out *tcpSender) write(data []byte) {
 	if out.err != nil {
 		return
 	}
+	defer func() {
+		if out.err != nil && out.conn != nil {
+			out.conn.Close()
+			out.conn = nil
+		}
+	}()
 	var n int
 	if n, out.err = out.conn.Write(data); out.err != nil {
 		out.err = errors.Wrap(out.err, "writing TCP")
@@ -73,10 +79,13 @@ func (out *tcpSender) write(data []byte) {
 }
 
 func (out *tcpSender) Send(data []byte) (err error) {
-	if out.conn, err = net.DialTimeout("tcp", out.Address, time.Duration(out.SendTimeout)*time.Millisecond); err != nil {
-		return errors.Wrap(err, "creating TCP connection")
+	if out.conn == nil {
+		out.err = nil
+		if out.conn, err = net.DialTimeout("tcp", out.Address, time.Duration(out.SendTimeout)*time.Millisecond); err != nil {
+			out.err = errors.Wrap(err, "creating TCP connection")
+			return out.err
+		}
 	}
-	defer out.conn.Close()
 	out.conn.SetDeadline(time.Now().Add(time.Duration(out.SendTimeout) * time.Millisecond))
 	out.write(data)
 	out.write([]byte{0})
