@@ -76,7 +76,7 @@ func (app *app) run() (err error) {
 		return
 	}
 	defer app.q.Close()
-	msgs := make(chan gelf.Chunk, len(app.ins))
+	msgs := make(chan gelf.Chunk, len(app.ins)*1000000)
 	defer close(msgs)
 	var wg sync.WaitGroup
 	for i := range app.ins {
