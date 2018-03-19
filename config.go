@@ -95,6 +95,6 @@ func (app *app) configure() (err error) {
 	if !stat.IsDir() {
 		return errors.Errorf("%q is not a directory", app.dataDir)
 	}
-	app.q = diskqueue.New("messages", app.dataDir, diskFileSize, 0, decompressSizeLimit, 2500, 2000*time.Millisecond, dummyLogf)
+	app.q = diskqueue.New("messages", app.dataDir, diskFileSize, 0, decompressSizeLimit, 10, 1000*time.Millisecond, dummyLogf)
 	return
 }
