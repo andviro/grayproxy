@@ -77,6 +77,8 @@ func (app *app) configure() (err error) {
 		switch {
 		case strings.HasPrefix(v, "http://") || strings.HasPrefix(v, "https://"):
 			app.outs[i] = &httpSender{Address: v, SendTimeout: app.sendTimeout}
+		case strings.HasPrefix(v, "ws://"):
+			app.outs[i] = newSender(v)
 		default:
 			app.outs[i] = &tcpSender{Address: strings.TrimPrefix(v, "tcp://"), SendTimeout: app.sendTimeout}
 		}
