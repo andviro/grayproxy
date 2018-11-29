@@ -1,14 +1,12 @@
+FROM golang:1.11-alpine AS builder
+RUN apk add --update alpine-sdk
+WORKDIR /tmp/app
+COPY . .
+RUN go build -mod=vendor -o grayproxy
+
 FROM alpine:latest
-ENV GOPATH=/go \
-    PATH=$PATH:$GOPATH/bin
-RUN mkdir -p /go/src/github.com/andviro/grayproxy
-ADD . /go/src/github.com/andviro/grayproxy
-RUN apk update && \
-    apk add ca-certificates git go libc-dev && \
-    go get -v github.com/andviro/grayproxy/...  && \
-    apk del git go libc-dev && \
-    rm -rf /go/src && \
-    rm -rf /go/pkg && \
-    rm -rf /var/cache/apk/*
+RUN apk add --update ca-certificates && rm -rf /var/cache/apk/*
+COPY --from=builder /tmp/app/grayproxy /grayproxy
 EXPOSE 12201/udp
-ENTRYPOINT ["/go/bin/grayproxy"]
+
+CMD ["/grayproxy"]
