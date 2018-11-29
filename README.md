@@ -15,10 +15,32 @@ docker run --rm -p 12201:12201/udp -it andviro/grayproxy -out http://some.host/g
 
 By default grayproxy configures the input at udp://0.0.0.0:12201 and no
 outputs. Outputs are added using `-out` flag and may be specified multiple
-times. Outputs may use HTTP, HTTPS and TCP protocol and are tried in
+times. Outputs may use HTTP, HTTPS, TCP and WebSocket protocol and are tried in
 round-robin fashion. If message was not sent to any output, it will be silently
 dropped unless disk buffer directory is configured. To listen on multiple TCP,
 HTTP or UDP inputs, `-in` flag can be used.
+
+## WebSocket output
+
+```
+-out ws://MyToken@127.0.0.1:20222
+```
+
+Emits all incoming messages to all connected WebSocket clients.
+Message is firstly converted to flattened json structure.
+Server side filtering of message is possible by specifying filters in query string.
+
+```
+curl --include \
+     --no-buffer \
+     --header "Connection: Upgrade" \
+     --header "Upgrade: websocket" \
+     --header "Host: 127.0.0.1:20222" \
+     --header "Origin: http://127.0.0.1:20222" \
+     --header "Sec-WebSocket-Key: SGVabG8sIHOvcmxDIQ==" \
+     --header "Sec-WebSocket-Version: 13" \
+     "http://127.0.0.1:20222/filter?token=MyToken&container_name=mycontainer"
+```
 
 ## Command-line options
 
