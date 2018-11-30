@@ -42,6 +42,8 @@ curl --include \
      "http://127.0.0.1:20222/filter?token=MyToken&container_name=mycontainer"
 ```
 
+or use [Graytail](https://github.com/akomic/graytail)
+
 ## Command-line options
 
 ```
