@@ -3,16 +3,17 @@ package main
 import (
 	"log"
 	"net/http"
+	"sync"
 
 	"encoding/json"
-	"github.com/gorilla/websocket"
-	"github.com/jeremywohl/flatten"
 	"net/url"
 	"strings"
 	"time"
-)
 
-var wsClients = make(map[*wsListener]bool)
+	"github.com/gorilla/websocket"
+	"github.com/jeremywohl/flatten"
+	"github.com/pkg/errors"
+)
 
 type wsListener struct {
 	c      *websocket.Conn
@@ -25,28 +26,32 @@ func (l *wsListener) close(msg string) {
 	l.c.Close()
 }
 
-type wsSender struct {
+type Sender struct {
 	Address string
-	URL     *url.URL
+
+	url     *url.URL
+	once    sync.Once
+	clients map[*wsListener]bool
 }
 
-func newSender(address string) sender {
-	log.Print("Creating WS Sender")
-
-	uri, err := url.Parse(address)
-	if err != nil {
-		panic(err)
-	}
-
-	s := wsSender{
-		Address: address,
-		URL:     uri,
-	}
-	go s.Listen()
-	return &s
+func (s *Sender) Start() error {
+	var rErr error
+	s.once.Do(func() {
+		u, err := url.Parse(s.Address)
+		if err != nil {
+			rErr = errors.Wrap(err, "parse URL")
+			return
+		}
+		s.url = u
+		s.clients = make(map[*wsListener]bool)
+		go s.listenAndServe()
+	})
+	return rErr
 }
 
-func (out *wsSender) logs(w http.ResponseWriter, r *http.Request) {
+func (s *Sender) logs(w http.ResponseWriter, r *http.Request) {
+	s.once.Do(func() {
+	})
 	query := r.URL.Query()
 
 	log.Printf("Connection from: [%s] [%s]", r.RemoteAddr, r.RequestURI)
@@ -61,9 +66,9 @@ func (out *wsSender) logs(w http.ResponseWriter, r *http.Request) {
 	l := wsListener{
 		c: c,
 	}
-	if out.URL.User.Username() != "" {
+	if s.url.User.Username() != "" {
 		if token, ok := query["token"]; ok {
-			if token[0] != out.URL.User.Username() {
+			if token[0] != s.url.User.Username() {
 				log.Print("Unauthorized: ", r.RemoteAddr)
 				l.close("Unauthorized")
 				return
@@ -79,7 +84,7 @@ func (out *wsSender) logs(w http.ResponseWriter, r *http.Request) {
 
 	l.filter = query
 
-	wsClients[&l] = true
+	s.clients[&l] = true
 
 	for {
 		_, _, err := l.c.ReadMessage()
@@ -88,13 +93,13 @@ func (out *wsSender) logs(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	delete(wsClients, &l)
+	delete(s.clients, &l)
 	log.Print("Disconnected: ", r.RemoteAddr)
 }
 
-func (out *wsSender) Listen() {
-	http.HandleFunc("/", out.logs)
-	log.Fatal(http.ListenAndServe(out.URL.Host, nil))
+func (s *Sender) listenAndServe() {
+	http.HandleFunc("/", s.logs)
+	log.Fatal(http.ListenAndServe(s.url.Host, nil))
 }
 
 type msg struct {
@@ -162,17 +167,17 @@ func (m *msg) isSendable(filter map[string][]string) bool {
 	return true
 }
 
-func (out *wsSender) Send(data []byte) (err error) {
+func (s *Sender) Send(data []byte) (err error) {
 
 	m, err := newMsg(data)
 	if err != nil {
 		return
 	}
 
-	if len(wsClients) > 0 {
-		for l, _ := range wsClients {
+	if len(s.clients) > 0 {
+		for l, _ := range s.clients {
 			if m.isSendable(l.filter) {
-				// log.Print("wsSender sending: ", string(m.json))
+				// log.Print("Sender sending: ", string(m.json))
 				l.c.WriteMessage(1, m.json)
 			}
 		}
