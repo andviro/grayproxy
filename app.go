@@ -4,7 +4,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/andviro/grayproxy/gelf"
+	"github.com/andviro/grayproxy/pkg/gelf"
 )
 
 type listener interface {
@@ -17,7 +17,7 @@ type sender interface {
 
 type queue interface {
 	Put(data []byte) error
-	ReadChan() chan []byte
+	ReadChan() <-chan []byte
 	Close() error
 }
 

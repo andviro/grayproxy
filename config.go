@@ -5,9 +5,13 @@ import (
 	"log"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/nsqio/go-diskqueue"
+	"github.com/andviro/grayproxy/pkg/disk"
+	"github.com/andviro/grayproxy/pkg/dummy"
+	"github.com/andviro/grayproxy/pkg/http"
+	"github.com/andviro/grayproxy/pkg/tcp"
+	"github.com/andviro/grayproxy/pkg/udp"
+	"github.com/andviro/grayproxy/pkg/ws"
 	"github.com/pkg/errors"
 )
 
@@ -33,7 +37,7 @@ func (ul *urlList) String() string {
 func (app *app) newListener(addr string) listener {
 	switch {
 	case strings.HasPrefix(addr, "udp://"):
-		return &udpListener{
+		return &udp.Listener{
 			Address:             strings.TrimPrefix(addr, "udp://"),
 			MaxChunkSize:        maxChunkSize,
 			MaxMessageSize:      -1,
@@ -41,23 +45,21 @@ func (app *app) newListener(addr string) listener {
 			AssembleTimeout:     assembleTimeout,
 		}
 	case strings.HasPrefix(addr, "http://"):
-		l := new(httpListener)
+		l := new(http.Listener)
 		l.Address = strings.TrimPrefix(addr, "http://")
 		l.StopTimeout = stopTimeout
 		return l
 	}
-	return &tcpListener{Address: strings.TrimPrefix(addr, "tcp://")}
+	return &tcp.Listener{Address: strings.TrimPrefix(addr, "tcp://")}
 }
 
-func dummyLogf(lvl diskqueue.LogLevel, f string, args ...interface{}) {}
-
-func (app *app) configure() (err error) {
+func (app *app) configure() error {
 	fs := flag.NewFlagSet("grayproxy", flag.ExitOnError)
 	fs.Var(&app.inputURLs, "in", "input address in form schema://address:port (may be specified multiple times). Default: udp://:12201")
 	fs.Var(&app.outputURLs, "out", "output address in form schema://address:port (may be specified multiple times)")
 	fs.IntVar(&app.sendTimeout, "sendTimeout", 1000, "maximum TCP or HTTP output timeout (ms)")
 	fs.StringVar(&app.dataDir, "dataDir", "", "buffer directory (defaults to no buffering)")
-	if err = fs.Parse(os.Args[1:]); err != nil {
+	if err := fs.Parse(os.Args[1:]); err != nil {
 		return errors.Wrap(err, "parsing command-line")
 	}
 	if len(app.inputURLs) == 0 {
@@ -71,23 +73,28 @@ func (app *app) configure() (err error) {
 	if len(app.outputURLs) == 0 {
 		log.Print("WARNING: no outputs configured")
 	}
-	app.outs = make([]sender, len(app.outputURLs))
+	app.outs = make([]sender, 0, len(app.outputURLs))
 	app.sendErrors = make([]error, len(app.outputURLs))
 	for i, v := range app.outputURLs {
+		log.Printf("adding output %d: %s", i, v)
 		switch {
 		case strings.HasPrefix(v, "http://") || strings.HasPrefix(v, "https://"):
-			app.outs[i] = &httpSender{Address: v, SendTimeout: app.sendTimeout}
+			app.outs = append(app.outs, &http.Sender{Address: v, SendTimeout: app.sendTimeout})
 		case strings.HasPrefix(v, "ws://"):
-			app.outs[i] = newSender(v)
+			wss := &ws.Sender{Address: v}
+			if err := wss.Start(); err != nil {
+				log.Println("Invalid websocket URL: ", err.Error())
+				break
+			}
+			app.outs = append(app.outs, wss)
 		default:
-			app.outs[i] = &tcpSender{Address: strings.TrimPrefix(v, "tcp://"), SendTimeout: app.sendTimeout}
+			app.outs = append(app.outs, &tcp.Sender{Address: strings.TrimPrefix(v, "tcp://"), SendTimeout: app.sendTimeout})
 		}
-		log.Printf("Added output %d: %s", i, v)
 	}
 	if app.dataDir == "" {
-		app.q = newDummyQueue()
+		app.q = dummy.New()
 		log.Println("Buffering is not configured, unsent messages will be lost")
-		return
+		return nil
 	}
 
 	stat, err := os.Stat(app.dataDir)
@@ -97,6 +104,7 @@ func (app *app) configure() (err error) {
 	if !stat.IsDir() {
 		return errors.Errorf("%q is not a directory", app.dataDir)
 	}
-	app.q = diskqueue.New("messages", app.dataDir, diskFileSize, 0, decompressSizeLimit, 10, 1000*time.Millisecond, dummyLogf)
-	return
+	q, err := disk.New(app.dataDir, diskFileSize)
+	app.q = q
+	return err
 }
