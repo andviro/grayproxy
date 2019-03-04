@@ -62,6 +62,7 @@ func (app *app) dequeue() {
 		}
 		if !sent {
 			if app.dataDir == "" {
+				log.Println(string(msg))
 				continue
 			}
 			if err := app.q.Put(msg); err != nil {

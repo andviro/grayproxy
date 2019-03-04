@@ -16,7 +16,7 @@ type Queue struct {
 
 func New() *Queue {
 	q := new(Queue)
-	q.in = make(chan []byte, 1000)
+	q.in = make(chan []byte, 1)
 	q.out = make(chan []byte)
 	go func() {
 		defer close(q.out)
