@@ -1,4 +1,4 @@
-package main
+package udp
 
 import (
 	"net"
@@ -6,15 +6,22 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/andviro/grayproxy/gelf"
+	"github.com/andviro/grayproxy/pkg/gelf"
 )
 
-type udpListener struct {
+type Listener struct {
 	Address                                                            string
 	MaxChunkSize, MaxMessageSize, DecompressSizeLimit, AssembleTimeout int
 }
 
-func (in *udpListener) Listen(dest chan<- gelf.Chunk) (err error) {
+func (l *Listener) address() string {
+	if l.Address != "" {
+		return l.Address
+	}
+	return ":12201"
+}
+
+func (in *Listener) Listen(dest chan<- gelf.Chunk) (err error) {
 	chunks := make(chan gelf.Chunk)
 	defer close(chunks)
 
@@ -25,7 +32,7 @@ func (in *udpListener) Listen(dest chan<- gelf.Chunk) (err error) {
 		}
 	}()
 
-	l, err := net.ListenPacket("udp", in.Address)
+	l, err := net.ListenPacket("udp", in.address())
 	if err != nil {
 		return errors.Wrap(err, "listening on UDP port")
 	}
