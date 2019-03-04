@@ -1,12 +1,13 @@
-FROM golang:1.11-alpine AS builder
-RUN apk add --update alpine-sdk
-WORKDIR /tmp/app
+FROM golang:1.12-alpine as builder
+RUN apk update && apk add --no-cache git ca-certificates tzdata && update-ca-certificates
+WORKDIR /app
 COPY . .
-RUN go build -mod=vendor -o grayproxy
+RUN GOOS=linux CGO_ENABLED=0 GOARCH=amd64 go build -mod=vendor -ldflags="-w -s" -o main
 
-FROM alpine:latest
-RUN apk add --update ca-certificates && rm -rf /var/cache/apk/*
-COPY --from=builder /tmp/app/grayproxy /grayproxy
+FROM scratch as production
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /app/main /grayproxy
 EXPOSE 12201/udp
-
-CMD ["/grayproxy"]
+USER appuser
+ENTRYPOINT ["/grayproxy"]

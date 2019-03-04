@@ -12,7 +12,6 @@ import (
 	"github.com/andviro/grayproxy/pkg/tcp"
 	"github.com/andviro/grayproxy/pkg/udp"
 	"github.com/andviro/grayproxy/pkg/ws"
-	"github.com/nsqio/go-diskqueue"
 	"github.com/pkg/errors"
 )
 
@@ -53,8 +52,6 @@ func (app *app) newListener(addr string) listener {
 	}
 	return &tcp.Listener{Address: strings.TrimPrefix(addr, "tcp://")}
 }
-
-func dummyLogf(lvl diskqueue.LogLevel, f string, args ...interface{}) {}
 
 func (app *app) configure() error {
 	fs := flag.NewFlagSet("grayproxy", flag.ExitOnError)
