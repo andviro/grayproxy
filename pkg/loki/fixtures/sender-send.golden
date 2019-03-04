@@ -1,0 +1,11 @@
+"2013-11-21T21:11:02.3072+04:00"
+{
+	"_some_env_var": "bar",
+	"_some_info": "foo",
+	"_user_id": "9001",
+	"host": "example.org",
+	"job": "test",
+	"level": "1",
+	"version": "1.1"
+}
+Backtrace here\n\nmore stuff

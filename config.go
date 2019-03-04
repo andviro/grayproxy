@@ -9,6 +9,7 @@ import (
 	"github.com/andviro/grayproxy/pkg/disk"
 	"github.com/andviro/grayproxy/pkg/dummy"
 	"github.com/andviro/grayproxy/pkg/http"
+	"github.com/andviro/grayproxy/pkg/loki"
 	"github.com/andviro/grayproxy/pkg/tcp"
 	"github.com/andviro/grayproxy/pkg/udp"
 	"github.com/andviro/grayproxy/pkg/ws"
@@ -79,6 +80,15 @@ func (app *app) configure() error {
 		log.Printf("adding output %d: %s", i, v)
 		switch {
 		case strings.HasPrefix(v, "http://") || strings.HasPrefix(v, "https://"):
+			if strings.HasSuffix(v, "/api/prom/push") {
+				ls, err := loki.New(v)
+				if err != nil {
+					log.Println("could not create loki output: ", err.Error())
+					continue
+				}
+				app.outs = append(app.outs, ls)
+				break
+			}
 			app.outs = append(app.outs, &http.Sender{Address: v, SendTimeout: app.sendTimeout})
 		case strings.HasPrefix(v, "ws://"):
 			wss := &ws.Sender{Address: v}

@@ -5,6 +5,8 @@ load-balancer in front of multiple Graylog server nodes. Also helps if the
 Graylog server or logging application is behind a firewall and direct logging
 to UDP is not viable.
 
+*NEW:* Support of streaming logs into [loki](https://github.com/grafana/loki) log aggregator.
+
 ## Usage
 
 The basic usage for single UDP input and single GELF HTTP output is:
@@ -19,6 +21,11 @@ times. Outputs may use HTTP, HTTPS, TCP and WebSocket protocol and are tried in
 round-robin fashion. If message was not sent to any output, it will be silently
 dropped unless disk buffer directory is configured. To listen on multiple TCP,
 HTTP or UDP inputs, `-in` flag can be used.
+
+## Loki output
+
+To send logs into [loki](https://github.com/grafana/loki) endpoint, HTTP
+or HTTPS output URL should end with "/api/prom/push".
 
 ## WebSocket output
 
