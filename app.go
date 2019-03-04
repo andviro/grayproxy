@@ -92,6 +92,7 @@ func (app *app) run() (err error) {
 	}
 	go app.enqueue(msgs)
 	go app.dequeue()
+	log.Println("starting grayproxy")
 	wg.Wait()
 	return
 }
