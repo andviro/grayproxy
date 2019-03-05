@@ -58,6 +58,7 @@ func (app *app) configure() error {
 	fs := flag.NewFlagSet("grayproxy", flag.ExitOnError)
 	fs.Var(&app.inputURLs, "in", "input address in form schema://address:port (may be specified multiple times). Default: udp://:12201")
 	fs.Var(&app.outputURLs, "out", "output address in form schema://address:port (may be specified multiple times)")
+	fs.BoolVar(&app.verbose, "v", false, "echo received logs on console")
 	fs.IntVar(&app.sendTimeout, "sendTimeout", 1000, "maximum TCP or HTTP output timeout (ms)")
 	fs.StringVar(&app.dataDir, "dataDir", "", "buffer directory (defaults to no buffering)")
 	if err := fs.Parse(os.Args[1:]); err != nil {

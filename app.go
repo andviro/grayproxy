@@ -24,6 +24,7 @@ type queue interface {
 type app struct {
 	inputURLs   urlList
 	outputURLs  urlList
+	verbose     bool
 	sendTimeout int
 	dataDir     string
 
@@ -44,6 +45,9 @@ func (app *app) enqueue(msgs <-chan gelf.Chunk) {
 func (app *app) dequeue() {
 	for msg := range app.q.ReadChan() {
 		var sent bool
+		if app.verbose {
+			log.Println(string(msg))
+		}
 		for i, out := range app.outs {
 			err := out.Send(msg)
 			if err != nil {
@@ -62,7 +66,6 @@ func (app *app) dequeue() {
 		}
 		if !sent {
 			if app.dataDir == "" {
-				log.Println(string(msg))
 				continue
 			}
 			if err := app.q.Put(msg); err != nil {
