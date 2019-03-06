@@ -2,6 +2,7 @@ package loki
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	"github.com/buger/jsonparser"
@@ -56,7 +57,7 @@ func (s *Sender) Send(data []byte) (err error) {
 	ls := s.labelSet()
 	ts := time.Now()
 	jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		switch k := string(key); k {
+		switch k := strings.TrimPrefix(string(key), "_"); k {
 		case "timestamp":
 			ms, _ := jsonparser.ParseFloat(value)
 			ts = time.Unix(0, int64(ms*float64(time.Second)))
@@ -65,9 +66,11 @@ func (s *Sender) Send(data []byte) (err error) {
 				msg = string(value)
 			}
 		case "full_message":
-			msg = string(value)
+			if string(value) != "" {
+				msg = string(value)
+			}
 		default:
-			ls[model.LabelName(string(key))] = model.LabelValue(string(value))
+			ls[model.LabelName(k)] = model.LabelValue(string(value))
 		}
 		return nil
 	})
