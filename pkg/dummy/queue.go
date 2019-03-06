@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-var Timeout = time.Second
+var Timeout = 10 * time.Second
 
 type Queue struct {
 	in   chan []byte
