@@ -35,6 +35,12 @@ func New(dataDir string, fileSize int) (*Queue, error) {
 			}
 			if data == nil {
 				time.Sleep(delay)
+				select {
+				case <-q.stop:
+					return
+				default:
+					continue
+				}
 			}
 			select {
 			case <-q.stop:
