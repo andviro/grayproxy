@@ -20,10 +20,14 @@ func tcpSplit(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		return 0, nil, nil
 	}
 	if i := bytes.IndexByte(data, 0); i >= 0 {
-		return i + 1, data[0:i], nil
+		buf := make([]byte, i)
+		copy(buf, data[0:i])
+		return i + 1, buf, nil
 	}
 	if atEOF {
-		return len(data), data, nil
+		buf := make([]byte, len(data))
+		copy(buf, data)
+		return len(buf), buf, nil
 	}
 	return
 }
