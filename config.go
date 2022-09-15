@@ -98,6 +98,8 @@ func (app *app) configure() error {
 				break
 			}
 			app.outs = append(app.outs, wss)
+		case strings.HasPrefix(v, "udp://"):
+			app.outs = append(app.outs, &udp.Sender{Address: strings.TrimPrefix(v, "udp://"), SendTimeout: app.sendTimeout})
 		default:
 			app.outs = append(app.outs, &tcp.Sender{Address: strings.TrimPrefix(v, "tcp://"), SendTimeout: app.sendTimeout})
 		}

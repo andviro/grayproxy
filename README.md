@@ -17,7 +17,7 @@ docker run --rm -p 12201:12201/udp -it andviro/grayproxy -out http://some.host/g
 
 By default grayproxy configures the input at udp://0.0.0.0:12201 and no
 outputs. Outputs are added using `-out` flag and may be specified multiple
-times. Outputs may use HTTP, HTTPS, TCP and WebSocket protocol and are tried in
+times. Outputs may use HTTP, HTTPS, TCP, UDP and WebSocket protocol and are tried in
 round-robin fashion. If message was not sent to any output, it will be silently
 dropped unless disk buffer directory is configured. To listen on multiple TCP,
 HTTP or UDP inputs, `-in` flag can be used.
