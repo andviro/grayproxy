@@ -11,6 +11,7 @@ import (
 	"github.com/andviro/grayproxy/pkg/http"
 	"github.com/andviro/grayproxy/pkg/loki"
 	"github.com/andviro/grayproxy/pkg/tcp"
+	"github.com/andviro/grayproxy/pkg/tls"
 	"github.com/andviro/grayproxy/pkg/udp"
 	"github.com/andviro/grayproxy/pkg/ws"
 	"github.com/pkg/errors"
@@ -100,6 +101,8 @@ func (app *app) configure() error {
 			app.outs = append(app.outs, wss)
 		case strings.HasPrefix(v, "udp://"):
 			app.outs = append(app.outs, &udp.Sender{Address: strings.TrimPrefix(v, "udp://"), SendTimeout: app.sendTimeout})
+		case strings.HasPrefix(v, "tls://"):
+			app.outs = append(app.outs, &tls.Sender{Address: strings.TrimPrefix(v, "tls://"), SendTimeout: app.sendTimeout})
 		default:
 			app.outs = append(app.outs, &tcp.Sender{Address: strings.TrimPrefix(v, "tcp://"), SendTimeout: app.sendTimeout})
 		}
